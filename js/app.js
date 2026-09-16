@@ -350,6 +350,88 @@
     box.appendChild(plaque({ partner: box.dataset.partner || '', tone: { bg: box.dataset.tone || '#2563eb', ink: '#fff' } }));
   }, true);
 
+
+  /* Копирование ссылки карточки. Clipboard API отказывает чаще, чем кажется:
+     страница не в фокусе, запрет в настройках, старый Safari. Поэтому при
+     отказе пробуем старый способ через скрытое поле и только потом
+     сообщаем о неудаче. */
+  function legacyCopy(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '0';
+      ta.style.left = '-2000px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, text.length);   /* без этого iOS ничего не берёт */
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).catch(function () {
+        return legacyCopy(text) ? Promise.resolve() : Promise.reject(new Error('copy failed'));
+      });
+    }
+    return legacyCopy(text) ? Promise.resolve() : Promise.reject(new Error('copy failed'));
+  }
+
+  function copyButton(url, o) {
+    var btn = el('button', 'card__copy');
+    btn.type = 'button';
+    var label = el('span', 'card__copy-text', 'Скопировать ссылку');
+    btn.appendChild(icon('copy'));
+    btn.appendChild(label);
+    /* У 19 карточек одинаковая надпись — читалке уточняем, чья ссылка. */
+    btn.appendChild(el('span', 'vh', ': ' + o.partner + (o.title ? ', ' + o.title : '')));
+
+    var back = null;
+    btn.addEventListener('click', function () {
+      copyText(url).then(function () {
+        clearTimeout(back);
+        btn.focus({ preventScroll: true });   /* скрытое поле могло забрать фокус */
+        btn.setAttribute('data-done', '1');
+        label.textContent = 'Ссылка скопирована';
+        say('Ссылка на ' + o.partner + ' скопирована.', { delay: 0, force: true });
+        back = setTimeout(function () {
+          btn.removeAttribute('data-done');
+          label.textContent = 'Скопировать ссылку';
+        }, 2500);
+      }).catch(function () {
+        clearTimeout(back);
+        label.textContent = 'Не скопировалось — выделите вручную';
+        say('Скопировать не удалось. Откройте ссылку кнопкой выше.', { delay: 0, force: true });
+        back = setTimeout(function () { label.textContent = 'Скопировать ссылку'; }, 3500);
+      });
+    });
+    return btn;
+  }
+
+  /* Мелкие значки одним местом: отдельные файлы ради двух иконок не нужны. */
+  function icon(name) {
+    var paths = {
+      copy: 'M6 2h6.6L16 5.4V14H6V2zm1.6 1.6v8.8h6.8V6.6h-2.8V3.6H7.6zM3 5.4h1.6V16h8.2v1.6H3V5.4z',
+      ext: 'M4.6 2h9.4v9.4h-2V5.4L3.4 14 2 12.6 10.6 4H4.6z'
+    };
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 20 20');
+    svg.setAttribute('width', '14');
+    svg.setAttribute('height', '14');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', paths[name]);
+    path.setAttribute('fill', 'currentColor');
+    svg.appendChild(path);
+    return svg;
+  }
+
   function buildCard(o) {
     var li = el('li');
     var card = el('article', 'card');
@@ -433,8 +515,7 @@
       foot.appendChild(soon);
     }
 
-    var erid = eridOf(url);
-    if (erid) foot.appendChild(el('p', 'card__ad', 'Реклама. erid: ' + erid));
+    if (url) foot.appendChild(copyButton(url, o));
     card.appendChild(foot);
 
     li.appendChild(card);
