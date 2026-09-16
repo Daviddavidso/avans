@@ -51,7 +51,7 @@ const NEEDLES = ['const OFFERS', 'const CATEGORIES'];
 
 /* Хэш пароля, вшитый при сборке. Нужен для хостингов, где над корнем сайта
    по FTP не подняться. Файл .admin-pass, если он есть, главнее. */
-const PASS_HASH = '$2y$12$46XU1nesZDm7aV1dxOq4Gu.PhFxiYvksVB8RePTPJ.LCmBnAoqLa6';
+const PASS_HASH = '$2y$12$D8MgLAimeWpcA.NxCk618OKXPoRfHGfV0FSAPxTHxU61.b1bHuZb6';
 
 /* Бот: код подключения живёт полчаса, алфавит без I/O/0/1 — их путают при
    наборе; журнал чужих попыток не растёт бесконечно. */
