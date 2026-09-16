@@ -149,35 +149,35 @@
     list.forEach(function (c, i) {
       var n = c.id === 'all' ? offers.length : offers.filter(function (o) { return o.cat === c.id; }).length;
       var id = 'cat-' + c.id;
-      var wrap = el('span', 'chip');
+
+      /* Обёртка — настоящий <label>: подпись читалке и клик по всей плашке
+         достаются от браузера, без aria-label и лишних обработчиков. */
+      var wrap = document.createElement('label');
+      wrap.className = 'chip';
+
       var input = document.createElement('input');
       input.type = 'radio';
       input.name = 'cat';
       input.id = id;
       input.value = c.id;
       input.checked = i === 0;
+
       var face = el('span', 'chip__face');
       face.appendChild(document.createTextNode(c.label));
       var count = el('span', 'chip__count', String(n));
-      count.setAttribute('aria-hidden', 'true');
+      count.setAttribute('aria-hidden', 'true');   /* цифру читалке даём словами ниже */
       face.appendChild(count);
-      var sr = el('span', 'vh', ', ' + n + ' ' + plural(n, 'продукт', 'продукта', 'продуктов'));
-      face.appendChild(sr);
-      var label = document.createElement('label');
-      label.setAttribute('for', id);
-      label.className = 'vh';
-      label.textContent = c.label;
+      face.appendChild(el('span', 'vh', ', ' + n + ' ' + plural(n, 'продукт', 'продукта', 'продуктов')));
+
       wrap.appendChild(input);
       wrap.appendChild(face);
       box.appendChild(wrap);
+
       input.addEventListener('change', function () {
         if (!input.checked) return;
         state.cat = input.value;
         renderOffers();
       });
-      /* подпись читалке даёт сам face, поэтому скрытый label не нужен */
-      label.remove();
-      input.setAttribute('aria-label', c.label + ', ' + n + ' ' + plural(n, 'продукт', 'продукта', 'продуктов'));
     });
   }
 
@@ -257,6 +257,20 @@
       a.rel = 'noopener noreferrer nofollow sponsored';
       a.appendChild(document.createTextNode((cat && cat.cta) || 'Перейти'));
       a.appendChild(el('span', 'vh', ': ' + o.partner + (o.title ? ', ' + o.title : '') + ' (откроется в новой вкладке)'));
+      /* Стрелка — видимый знак того, что кнопка уводит на сайт компании.
+         Для читалки она пустая: про новую вкладку уже сказано словами. */
+      var arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      arrow.setAttribute('viewBox', '0 0 16 16');
+      arrow.setAttribute('width', '14');
+      arrow.setAttribute('height', '14');
+      arrow.setAttribute('aria-hidden', 'true');
+      arrow.setAttribute('focusable', 'false');
+      arrow.setAttribute('class', 'btn__arrow');
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M4.6 2h9.4v9.4h-2V5.4L3.4 14 2 12.6 10.6 4H4.6z');
+      path.setAttribute('fill', 'currentColor');
+      arrow.appendChild(path);
+      a.appendChild(arrow);
       foot.appendChild(a);
     } else {
       var soon = el('p', 'card__soon', 'Скоро');
@@ -398,10 +412,21 @@
       var best = null, bestVal = 0;
       ids.forEach(function (id) { if ((visible[id] || 0) > bestVal) { bestVal = visible[id]; best = id; } });
       links.forEach(function (a) { a.removeAttribute('aria-current'); });
-      if (best) map[best].setAttribute('aria-current', 'true');
+      if (best) map[best].setAttribute('aria-current', 'location');
     }, { rootMargin: '-96px 0px -55% 0px', threshold: [0, .25, .5, 1] });
 
     ids.forEach(function (id) { io.observe(document.getElementById(id)); });
+  }
+
+  /* Браузер восстанавливает состояние полей при перезагрузке и возврате
+     «назад». Событие change при этом не гарантировано, поэтому состояние
+     фильтра и поиска читаем из самих полей — иначе на экране выбран один
+     раздел, а список показывает другой. */
+  function syncFromForm() {
+    var checked = $('input[name="cat"]:checked');
+    if (checked) state.cat = checked.value;
+    var input = $('#q');
+    if (input) state.q = input.value;
   }
 
   /* ---------- запуск ---------- */
@@ -411,7 +436,13 @@
     renderTicker();
     renderFilters();
     bindSearch();
+    syncFromForm();
     renderOffers(true);
+    window.addEventListener('pageshow', function (e) {
+      if (!e.persisted) return;
+      syncFromForm();
+      renderOffers(true);
+    });
     bindMenu();
     bindSpy();
     if (/[?&]draft/.test(location.search)) document.documentElement.setAttribute('data-draft', '1');

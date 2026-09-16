@@ -11,8 +11,8 @@
 <meta property="og:title" content="АВАНС — займы, карты и счёт для бизнеса">
 <meta property="og:description" content="Займы онлайн, дебетовые и кредитные карты, расчётный счёт для бизнеса — в одном списке.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="fonts/manrope.css?v=20260916120726">
-<link rel="stylesheet" href="css/style.css?v=20260916120726">
+<link rel="stylesheet" href="fonts/manrope.css?v=20260916120903">
+<link rel="stylesheet" href="css/style.css?v=20260916120903">
 </head>
 <body>
 
@@ -20,7 +20,7 @@
 
 <header class="head">
   <div class="head__bar">
-    <a class="brand" href="#main">
+    <a class="brand" href="index.html" aria-label="АВАНС — на главную">
       <span class="brand__dot" aria-hidden="true"></span>
       <span class="brand__word" data-brand>АВАНС</span>
     </a>
@@ -42,7 +42,7 @@
   </div>
 
   <div class="menu" id="mobile-menu" hidden>
-    <div class="menu__panel" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+    <div class="menu__panel" role="dialog" aria-modal="true" aria-labelledby="menu-title" tabindex="-1">
       <p class="vh" id="menu-title">Меню сайта</p>
       <button class="menu__close" type="button" id="menu-close">
         <span aria-hidden="true">✕</span><span class="vh">Закрыть меню</span>
@@ -110,6 +110,11 @@
           <div class="filters__row" id="filters"><!-- из data.js --></div>
         </fieldset>
       </div>
+
+      <noscript>
+        <p class="catalog__noscript">Каталог собирается скриптом, а он сейчас отключён в браузере.
+        Включите JavaScript — и список предложений появится здесь.</p>
+      </noscript>
 
       <p class="results" id="results" role="status" aria-live="polite"></p>
 
@@ -227,7 +232,7 @@
   </div>
 </footer>
 
-<script src="data.js?v=20260916120726"></script>
-<script src="js/app.js?v=20260916120726"></script>
+<script src="data.js?v=20260916120903"></script>
+<script src="js/app.js?v=20260916120903"></script>
 </body>
 </html>
