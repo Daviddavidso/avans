@@ -36,6 +36,7 @@
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -56,6 +57,57 @@
     return many;
   }
 
+  /* ==========================================================================
+     Липкая шапка: её высота — не константа (переносы строк, крупный шрифт,
+     масштаб 200%). Меряем и держим в переменной, из неё считаются отступы
+     прокрутки, иначе фокус и якоря уезжают под шапку.
+     ========================================================================== */
+  var head = $('.head');
+
+  function measureHead() {
+    if (!head) return;
+    var sticky = getComputedStyle(head).position === 'sticky';
+    var h = sticky ? Math.round(head.getBoundingClientRect().height) : 0;
+    document.documentElement.style.setProperty('--head-h', h + 'px');
+  }
+
+  function headOffset() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--head-h');
+    return (parseFloat(v) || 0) + 12;
+  }
+
+  /* Safari не учитывает scroll-padding при переходе по Tab — подстраховываем. */
+  function ensureVisible(node) {
+    if (!node || !node.getBoundingClientRect) return;
+    var menu = $('#mobile-menu');
+    if (menu && !menu.hidden) return;
+    var r = node.getBoundingClientRect(), top = headOffset();
+    if (r.top < top) window.scrollBy({ top: r.top - top, behavior: 'instant' });
+    else if (r.bottom > window.innerHeight) window.scrollBy({ top: r.bottom - window.innerHeight + 12, behavior: 'instant' });
+  }
+
+  /* ==========================================================================
+     Живая область. Видимая строка «Показано N из M» обновляется сразу,
+     а читалке текст уходит с задержкой: иначе при наборе она тараторит
+     на каждую букву. Это два разных узла — иначе картинка отстаёт от списка.
+     ========================================================================== */
+  var liveBox = $('#live');
+  var sayTimer = null, echoTimer = null, lastSaid = '', booted = false;
+
+  function say(text, opts) {
+    opts = opts || {};
+    if (!liveBox || !booted) return;
+    if (!opts.force && text === lastSaid) return;
+    clearTimeout(sayTimer); clearTimeout(echoTimer);
+    sayTimer = setTimeout(function () {
+      lastSaid = text;
+      liveBox.textContent = '';                       /* пустой такт: тот же */
+      echoTimer = setTimeout(function () {            /* текст подряд иначе  */
+        liveBox.textContent = text;                   /* не объявится        */
+      }, 60);
+    }, opts.delay == null ? 250 : opts.delay);
+  }
+
   /* ---------- тексты сайта из data.js ---------- */
   function applySite() {
     if (site.brand) {
@@ -74,6 +126,7 @@
         tg.href = 'https://t.me/' + nick;
         tg.target = '_blank';
         tg.rel = 'noopener';
+        tg.appendChild(el('span', 'vh', ' (откроется в новой вкладке)'));
         tg.hidden = false;
       }
     }
@@ -98,7 +151,7 @@
     });
   }
 
-  /* ---------- лента логотипов ---------- */
+  /* ---------- лента логотипов (украшение, скрыта от читалки) ---------- */
   function renderTicker() {
     var track = $('#ticker-track');
     var pause = $('#ticker-pause');
@@ -106,35 +159,33 @@
 
     var seen = {}, logos = [];
     offers.forEach(function (o) {
-      if (o.logo && !seen[o.logo]) { seen[o.logo] = 1; logos.push({ src: o.logo, name: o.partner }); }
+      if (o.logo && !seen[o.logo]) { seen[o.logo] = 1; logos.push(o.logo); }
     });
-    if (!logos.length) { var sec = track.closest('.ticker'); if (sec) sec.hidden = true; return; }
+    var section = track.closest('.ticker');
+    if (!logos.length) { if (section) section.hidden = true; return; }
 
     track.textContent = '';
-    function fill(hidden) {
-      logos.forEach(function (l) {
+    function fill() {
+      logos.forEach(function (src) {
         var li = el('li', 'ticker__item');
-        if (hidden) li.setAttribute('aria-hidden', 'true');
         var img = new Image();
-        img.src = l.src;
-        img.alt = hidden ? '' : l.name;
+        img.src = src;
+        img.alt = '';
         img.loading = 'lazy';
         img.decoding = 'async';
         li.appendChild(img);
         track.appendChild(li);
       });
     }
-    fill(false);
-    fill(true); /* вторая копия — только для бесшовной прокрутки */
+    fill();
+    fill();   /* вторая копия — для бесшовной прокрутки */
 
     if (pause) {
+      if (reduced) { pause.hidden = true; return; }   /* нечего останавливать */
       pause.addEventListener('click', function () {
         var paused = track.classList.toggle('is-paused');
         pause.textContent = paused ? 'Продолжить движение' : 'Остановить движение';
       });
-      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        pause.hidden = true;
-      }
     }
   }
 
@@ -165,7 +216,7 @@
       var face = el('span', 'chip__face');
       face.appendChild(document.createTextNode(c.label));
       var count = el('span', 'chip__count', String(n));
-      count.setAttribute('aria-hidden', 'true');   /* цифру читалке даём словами ниже */
+      count.setAttribute('aria-hidden', 'true');   /* цифру читалке даём словами */
       face.appendChild(count);
       face.appendChild(el('span', 'vh', ', ' + n + ' ' + plural(n, 'продукт', 'продукта', 'продуктов')));
 
@@ -176,7 +227,7 @@
       input.addEventListener('change', function () {
         if (!input.checked) return;
         state.cat = input.value;
-        renderOffers();
+        renderOffers({ delay: 250 });
       });
     });
   }
@@ -200,6 +251,28 @@
     }).join('');
   }
 
+  function plaque(o) {
+    var node = el('span', 'card__plaque', initials(o.partner));
+    var tone = o.tone || {};
+    node.style.background = tone.bg || '#2563eb';
+    node.style.color = tone.ink || '#fff';
+    node.setAttribute('aria-hidden', 'true');   /* имя компании рядом в заголовке */
+    return node;
+  }
+
+  /* Картинка не загрузилась (клиент указал путь с опечаткой) — вместо
+     битого значка рисуем плашку с инициалами. Событие error у <img> не
+     всплывает, поэтому слушаем на фазе перехвата. */
+  document.addEventListener('error', function (e) {
+    var img = e.target;
+    if (!img || img.tagName !== 'IMG' || !img.closest) return;
+    var box = img.closest('.card__logo');
+    if (!box || box.dataset.fallback === '1') return;
+    box.dataset.fallback = '1';
+    box.textContent = '';
+    box.appendChild(plaque({ partner: box.dataset.partner || '', tone: { bg: box.dataset.tone || '#2563eb', ink: '#fff' } }));
+  }, true);
+
   function buildCard(o) {
     var li = el('li');
     var card = el('article', 'card');
@@ -207,27 +280,28 @@
 
     var top = el('div', 'card__top');
     var logo = el('span', 'card__logo');
+    logo.dataset.partner = o.partner || '';
+    if (o.tone && o.tone.bg) logo.dataset.tone = o.tone.bg;
     if (o.logo) {
       var img = new Image();
       img.src = o.logo;
-      img.alt = '';
+      img.alt = '';          /* название компании стоит рядом заголовком */
       img.loading = 'lazy';
       img.decoding = 'async';
       logo.appendChild(img);
     } else {
-      var plaque = el('span', 'card__plaque', initials(o.partner));
-      var tone = o.tone || {};
-      plaque.style.background = tone.bg || '#2563eb';
-      plaque.style.color = tone.ink || '#fff';
-      plaque.setAttribute('aria-hidden', 'true');
-      logo.appendChild(plaque);
+      logo.appendChild(plaque(o));
     }
     top.appendChild(logo);
 
-    var names = el('div');
-    names.appendChild(el('h3', 'card__name', o.partner));
-    if (o.tag) names.appendChild(el('p', 'card__tag', o.tag));
-    top.appendChild(names);
+    /* Тип продукта — внутри заголовка: у одного банка бывает несколько
+       карточек, и в списке заголовков они не должны совпасть. */
+    var h3 = el('h3', 'card__name');
+    h3.appendChild(el('span', 'card__partner', o.partner));
+    /* Пробел между строками заголовка обязателен: без него доступное имя
+       склеивается в «Займермикрозайм». */
+    if (o.tag) { h3.appendChild(document.createTextNode(' ')); h3.appendChild(el('span', 'card__tag', o.tag)); }
+    top.appendChild(h3);
     card.appendChild(top);
 
     var body = el('div');
@@ -256,9 +330,9 @@
       a.target = '_blank';
       a.rel = 'noopener noreferrer nofollow sponsored';
       a.appendChild(document.createTextNode((cat && cat.cta) || 'Перейти'));
+      /* Видимый текст + скрытый хвост: доступное имя начинается с того,
+         что написано на кнопке, — значит «Label in Name» не сломать. */
       a.appendChild(el('span', 'vh', ': ' + o.partner + (o.title ? ', ' + o.title : '') + ' (откроется в новой вкладке)'));
-      /* Стрелка — видимый знак того, что кнопка уводит на сайт компании.
-         Для читалки она пустая: про новую вкладку уже сказано словами. */
       var arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       arrow.setAttribute('viewBox', '0 0 16 16');
       arrow.setAttribute('width', '14');
@@ -274,7 +348,7 @@
       foot.appendChild(a);
     } else {
       var soon = el('p', 'card__soon', 'Скоро');
-      soon.appendChild(el('span', 'vh', ': ссылка на ' + o.partner + ' пока не подключена'));
+      soon.appendChild(el('span', 'vh', ': партнёрская ссылка на ' + o.partner + ' ещё не подключена, оформить здесь пока нельзя'));
       foot.appendChild(soon);
     }
 
@@ -297,41 +371,108 @@
     return q.split(/\s+/).every(function (word) { return hay.indexOf(word) !== -1; });
   }
 
-  var sayTimer = null;
-  function say(text) {
-    var box = $('#results');
-    if (!box) return;
-    clearTimeout(sayTimer);
-    sayTimer = setTimeout(function () { box.textContent = text; }, 450);
-  }
+  var renderedKeys = null;
 
-  function renderOffers(initial) {
+  function renderOffers(opts) {
+    opts = opts || {};
     var grid = $('#offers');
     var empty = $('#empty');
+    var emptyText = $('#empty-text');
+    var countBox = $('#results');
     if (!grid) return;
-    var list = offers.filter(matches);
 
-    grid.textContent = '';
-    list.forEach(function (o) { grid.appendChild(buildCard(o)); });
+    var list = offers.filter(matches);
+    var keys = list.map(function (o) { return o.partner + '|' + o.title; }).join(',');
+    var sameSet = keys === renderedKeys;
+
+    /* Куда вернуть фокус, если он был на кнопке внутри списка. */
+    var act = document.activeElement;
+    var inList = !!(act && grid.contains(act));
+    var prevPos = -1, prevKey = null;
+    if (inList) {
+      var li = act.closest('li');
+      prevPos = li ? Array.prototype.indexOf.call(grid.children, li) : -1;
+      prevKey = li ? li.getAttribute('data-key') : null;
+    }
+
+    if (!sameSet) {
+      renderedKeys = keys;
+      grid.textContent = '';
+      list.forEach(function (o) {
+        var node = buildCard(o);
+        node.setAttribute('data-key', o.partner + '|' + o.title);
+        grid.appendChild(node);
+      });
+    }
     if (empty) empty.hidden = list.length !== 0;
 
     var cat = state.cat === 'all' ? null : catById(state.cat);
+    var word = plural(list.length, 'продукт', 'продукта', 'продуктов');
+
+    if (countBox) {
+      countBox.textContent = list.length
+        ? 'Показано ' + list.length + ' ' + word + ' из ' + offers.length + (cat ? ' · раздел «' + cat.label + '»' : '')
+        : '';
+    }
+    if (emptyText) {
+      var what = [];
+      if (cat) what.push('раздел «' + cat.label + '»');
+      if (state.q.trim()) what.push('поиск «' + state.q.trim() + '»');
+      emptyText.textContent = what.length
+        ? 'По этим условиям ничего не нашлось. Сейчас выбрано: ' + what.join(', ') + '.'
+        : 'По этому запросу ничего не нашлось.';
+    }
+
+    /* Фокус трогаем только если он был внутри списка и его карточку снесли. */
+    if (inList && !sameSet) {
+      var back = prevKey && grid.querySelector('[data-key="' + prevKey.replace(/"/g, '\\"') + '"] a, [data-key="' + prevKey.replace(/"/g, '\\"') + '"] button');
+      if (!back && prevPos > -1 && grid.children.length) {
+        var near = grid.children[Math.min(prevPos, grid.children.length - 1)];
+        back = near && near.querySelector('a, button');
+      }
+      if (!back) back = countBox;
+      if (back) { back.focus({ preventScroll: true }); ensureVisible(back); }
+    }
+
     var text = list.length
-      ? 'Показано ' + list.length + ' ' + plural(list.length, 'продукт', 'продукта', 'продуктов') +
-        ' из ' + offers.length + (cat ? ' · раздел «' + cat.label + '»' : '')
-      : 'Ничего не нашлось. Измените запрос или выберите другой раздел.';
-    if (initial) { var box = $('#results'); if (box) box.textContent = text; }
-    else say(text);
+      ? 'Найдено ' + list.length + ' ' + word + (list.length === offers.length ? '' : ' из ' + offers.length) + '.'
+      : 'Ничего не найдено. Измените запрос или сбросьте фильтры.';
+    if (opts.initial) lastSaid = text;
+    else say(text, opts);
   }
 
   /* ---------- поиск ---------- */
   function bindSearch() {
+    var form = $('#search-form');
     var input = $('#q');
+    var clear = $('#q-clear');
     var reset = $('#reset');
+
+    function toggleClear() { if (clear) clear.hidden = !input || input.value === ''; }
+
     if (input) {
       input.addEventListener('input', function () {
         state.q = input.value;
-        renderOffers();
+        toggleClear();
+        renderOffers({ delay: 500 });
+      });
+    }
+    if (form) {
+      /* Перезагрузка страницы стёрла бы выбранный раздел, поэтому отправку
+         перехватываем и просто уводим к результатам. */
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var head2 = $('#catalog-title');
+        if (head2) { head2.focus({ preventScroll: true }); ensureVisible(head2); }
+        renderOffers({ delay: 0, force: true });
+      });
+    }
+    if (clear) {
+      clear.addEventListener('click', function () {
+        state.q = '';
+        if (input) { input.value = ''; input.focus(); }
+        toggleClear();
+        renderOffers({ delay: 0, force: true });
       });
     }
     if (reset) {
@@ -341,13 +482,19 @@
         if (input) input.value = '';
         var all = $('#cat-all');
         if (all) all.checked = true;
-        renderOffers();
+        toggleClear();
+        renderOffers({ delay: 0, force: true });
+        /* Кнопка живёт внутри блока «ничего не нашлось» и сейчас исчезнет —
+           фокус нужно увести заранее, иначе он свалится на body. */
         if (input) input.focus();
       });
     }
+    toggleClear();
   }
 
   /* ---------- мобильное меню ---------- */
+  var menuApi = { close: function () {} };
+
   function bindMenu() {
     var burger = $('#burger');
     var menu = $('#mobile-menu');
@@ -369,18 +516,22 @@
       var f = focusables();
       (f[0] || panel).focus();
     }
-    function close() {
+    function close(restoreFocus) {
+      if (menu.hidden) return;
       menu.hidden = true;
       burger.setAttribute('aria-expanded', 'false');
       document.body.style.overflow = '';
       var main = $('#main');
       if (main) main.inert = false;
-      if (lastFocus && lastFocus.focus) lastFocus.focus();
+      if (restoreFocus !== false && lastFocus && lastFocus.focus) lastFocus.focus();
     }
+    menuApi.close = close;
+    menuApi.isOpen = function () { return !menu.hidden; };
+    menuApi.has = function (node) { return menu.contains(node); };
+
     burger.addEventListener('click', function () { menu.hidden ? open() : close(); });
-    if (closeBtn) closeBtn.addEventListener('click', close);
+    if (closeBtn) closeBtn.addEventListener('click', function () { close(); });
     menu.addEventListener('click', function (e) { if (e.target === menu) close(); });
-    $$('a', panel).forEach(function (a) { a.addEventListener('click', close); });
     document.addEventListener('keydown', function (e) {
       if (menu.hidden) return;
       if (e.key === 'Escape') { e.preventDefault(); close(); return; }
@@ -391,6 +542,43 @@
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
+  }
+
+  /* ---------- переходы по якорям ---------- */
+  function goTo(section) {
+    if (!section) return;
+    /* Плавная прокрутка держится на requestAnimationFrame, а он замирает,
+       пока вкладка скрыта (встроенная превью-панель — как раз такой случай):
+       страница осталась бы на месте. */
+    var smooth = !reduced && document.visibilityState !== 'hidden';
+    section.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'start' });
+    var target = section.matches('h1, h2, h3, p') ? section : (section.querySelector('h1, h2, h3') || section);
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    /* Без переноса фокуса следующий Tab возвращает человека в шапку. */
+    target.focus({ preventScroll: true });
+    ensureVisible(target);
+  }
+
+  function bindAnchors() {
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (!a) return;
+      var href = a.getAttribute('href');
+      if (!href || href === '#') return;
+      var section = document.getElementById(href.slice(1));
+      if (!section) return;
+      e.preventDefault();
+      /* Меню закрываем ДО переноса фокуса: у открытого меню main — inert,
+         и фокус на цель просто не встанет. */
+      if (menuApi.isOpen && menuApi.isOpen() && menuApi.has(a)) menuApi.close(false);
+      if (history.pushState) history.pushState(null, '', href);
+      goTo(section);
+    });
+
+    if (location.hash.length > 1) {
+      var start = document.getElementById(location.hash.slice(1));
+      if (start) setTimeout(function () { goTo(start); }, 0);
+    }
   }
 
   /* ---------- подсветка текущего раздела в шапке ---------- */
@@ -419,9 +607,7 @@
   }
 
   /* Браузер восстанавливает состояние полей при перезагрузке и возврате
-     «назад». Событие change при этом не гарантировано, поэтому состояние
-     фильтра и поиска читаем из самих полей — иначе на экране выбран один
-     раздел, а список показывает другой. */
+     «назад», а событие change при этом не гарантировано. */
   function syncFromForm() {
     var checked = $('input[name="cat"]:checked');
     if (checked) state.cat = checked.value;
@@ -431,20 +617,42 @@
 
   /* ---------- запуск ---------- */
   function init() {
+    document.documentElement.classList.add('js');
+    measureHead();
+    if ('ResizeObserver' in window && head) new ResizeObserver(measureHead).observe(head);
+    window.addEventListener('orientationchange', measureHead);
+    window.addEventListener('resize', measureHead);
+
     applySite();
     renderStats();
     renderTicker();
     renderFilters();
     bindSearch();
     syncFromForm();
-    renderOffers(true);
+    renderOffers({ initial: true });
+    bindMenu();
+    bindAnchors();
+    bindSpy();
+    booted = true;
+
+    /* Фокус не должен оказываться под липкой шапкой. */
+    document.addEventListener('focusin', function (e) {
+      if (!e.target || e.target === document.body) return;
+      if (e.target.closest && e.target.closest('.head')) return;
+      ensureVisible(e.target);
+    });
+    /* Раскрытый вопрос выталкивает кнопку наверх — возвращаем её в поле зрения. */
+    $$('.qa__item').forEach(function (d) {
+      d.addEventListener('toggle', function () { if (d.open) ensureVisible(d.querySelector('summary')); });
+    });
+
     window.addEventListener('pageshow', function (e) {
       if (!e.persisted) return;
       syncFromForm();
-      renderOffers(true);
+      renderedKeys = null;
+      renderOffers({ initial: true });
     });
-    bindMenu();
-    bindSpy();
+
     if (/[?&]draft/.test(location.search)) document.documentElement.setAttribute('data-draft', '1');
   }
 

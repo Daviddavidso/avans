@@ -29,6 +29,8 @@
   --blue-fill-hover: #1e51e0;   /* белый текст 6.35:1; светлее нельзя */
   --blue-text: #93c5fd;
 
+  --head-h: 92px;           /* реальную высоту шапки меряет скрипт */
+  --focus-gap: 12px;
   --maxw: 1160px;
   --maxw-narrow: 760px;
   --r-card: 16px;
@@ -48,7 +50,10 @@
 /* ---------- сброс ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 108px; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--head-h) + var(--focus-gap)); }
+/* Якорь и фокус не должны уезжать под липкую шапку (WCAG 2.4.11). */
+[id] { scroll-margin-top: calc(var(--head-h) + var(--focus-gap)); }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
@@ -84,6 +89,13 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
   box-shadow: 0 0 0 6px rgba(59,130,246,.45);
 }
 
+.vh--focusable:focus {
+  position: static !important; width: auto; height: auto; margin: 0; overflow: visible;
+  clip: auto; clip-path: none; white-space: normal;
+  display: inline-block; margin-bottom: 12px; padding: 10px 18px; border-radius: 9999px;
+  background: #fff; color: #111216; font-weight: 700; text-decoration: none;
+}
+
 .skip-link {
   position: absolute; left: 16px; top: -200px; z-index: 200;
   background: #fff; color: #111; padding: 12px 18px; border-radius: 10px;
@@ -115,6 +127,8 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
    шапка
    ============================================================ */
 .head { position: sticky; top: 0; z-index: 100; padding: 14px 20px 0; }
+/* На низком экране (телефон лёжа) липкая шапка съедает половину высоты. */
+@media (max-height: 480px) { .head { position: static; } }
 .head__bar {
   max-width: var(--maxw); margin: 0 auto;
   display: flex; align-items: center; gap: 16px;
@@ -138,7 +152,7 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
   transition: background .15s var(--ease), color .15s var(--ease);
 }
 .pill:hover { background: rgba(255,255,255,.14); color: #fff; }
-.pill[aria-current] { background: var(--blue-fill); color: #fff; }
+.pill[aria-current] { background: var(--blue-fill); color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 
 .head__cta { padding: 10px 20px; font-size: .95rem; }
 
@@ -237,14 +251,25 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
 /* панель управления каталогом */
 .toolbar { margin-top: 30px; display: grid; gap: 16px; }
 
-.search__label { display: block; font-size: .9rem; font-weight: 600; color: var(--granite); margin-bottom: 8px; }
+.search__label, .filters__legend { display: block; font-size: .9rem; font-weight: 600; color: var(--granite); margin-bottom: 8px; padding: 0; }
+.hint { margin-top: 8px; color: var(--slate); font-size: .86rem; }
 .search__box { position: relative; display: flex; align-items: center; max-width: 420px; }
 .search__icon { position: absolute; left: 14px; color: var(--slate); pointer-events: none; }
 .search__input {
-  width: 100%; background: var(--page); border: 1px solid var(--border-ctrl); border-radius: var(--r-input);
+  width: 100%; padding-right: 44px; background: var(--page); border: 1px solid var(--border-ctrl); border-radius: var(--r-input);
   padding: 13px 14px 13px 42px; color: var(--ink); font-size: 1rem;
 }
-.search__input::placeholder { color: #8d9099; }
+/* Firefox приглушает placeholder своим opacity — возвращаем полный цвет. */
+.search__input::placeholder { color: #8d9099; opacity: 1; }
+/* Родная крестик-кнопка WebKit не имеет доступного имени и не берётся
+   с клавиатуры — прячем её и даём свою. */
+.search__input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+.search__clear {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; display: grid; place-items: center;
+  background: transparent; border: 0; border-radius: 50%; color: var(--granite); cursor: pointer;
+}
+.search__clear:hover { background: var(--surface-soft); color: #fff; }
 .search__input:hover { border-color: var(--border-ctrl-hover); }
 
 .filters { border: 0; padding: 0; margin: 0; min-width: 0; }
@@ -262,7 +287,13 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
 }
 .chip__count { font-size: .82rem; color: var(--slate); font-weight: 600; }
 .chip input:hover + .chip__face { border-color: var(--border-ctrl-hover); background: var(--surface-soft); }
-.chip input:checked + .chip__face { background: var(--blue-fill); border-color: var(--blue-fill); color: #fff; }
+/* Выбор различается не только заливкой: появляется галочка (WCAG 1.4.1). */
+.chip__face::before {
+  content: "✓"; width: 0; overflow: hidden; opacity: 0; font-weight: 800;
+  transition: width .12s var(--ease), opacity .12s var(--ease);
+}
+.chip input:checked + .chip__face { background: var(--blue-fill); border-color: var(--blue-fill); color: #fff; font-weight: 800; }
+.chip input:checked + .chip__face::before { width: 1em; opacity: 1; }
 .chip input:checked + .chip__face .chip__count { color: #fff; }
 .chip input:focus-visible + .chip__face { outline: 2px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 6px rgba(59,130,246,.45); }
 
@@ -294,8 +325,10 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
 }
 .card__logo img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
 .card__plaque { width: 100%; height: 100%; border-radius: 10px; display: grid; place-items: center; font-weight: 800; font-size: 1.1rem; letter-spacing: .02em; }
-.card__name { font-size: 1.18rem; font-weight: 800; letter-spacing: -.01em; }
-.card__tag { margin-top: 2px; color: var(--slate); font-size: .86rem; }
+.card__name { min-width: 0; font-size: 1.18rem; font-weight: 800; letter-spacing: -.01em; }
+.card__partner { display: block; }
+/* Тип продукта — часть заголовка, но выглядит подписью. */
+.card__tag { display: block; margin-top: 2px; color: var(--slate); font-size: .86rem; font-weight: 500; letter-spacing: 0; }
 
 .card__headline { font-size: 1.28rem; font-weight: 800; color: var(--ink); letter-spacing: -.02em; line-height: 1.2; }
 .card__note { margin-top: 4px; color: var(--granite); font-size: .95rem; }
@@ -338,15 +371,17 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
 .qa__item { background: var(--page); border: 1px solid var(--border-soft); border-radius: var(--r-card); overflow: hidden; }
 .qa__q {
   list-style: none; cursor: pointer; padding: 18px 54px 18px 22px; position: relative;
-  font-weight: 700; color: var(--ink); font-size: 1.04rem;
 }
 .qa__q::-webkit-details-marker { display: none; }
-.qa__q::after {
-  content: ""; position: absolute; right: 22px; top: 50%; width: 11px; height: 11px;
+/* Заголовок внутри summary — чтобы вопросы попадали в список заголовков,
+   но выглядели обычной строкой. */
+.qa__h { margin: 0; font-size: 1.04rem; font-weight: 700; color: var(--ink); line-height: 1.35; letter-spacing: -.01em; }
+.qa__ico {
+  position: absolute; right: 22px; top: 50%; width: 11px; height: 11px;
   border-right: 2px solid var(--granite); border-bottom: 2px solid var(--granite);
   transform: translateY(-70%) rotate(45deg); transition: transform .18s var(--ease);
 }
-.qa__item[open] .qa__q::after { transform: translateY(-30%) rotate(-135deg); }
+.qa__item[open] .qa__ico { transform: translateY(-30%) rotate(-135deg); }
 .qa__q:hover { background: rgba(255,255,255,.04); }
 .qa__a { padding: 0 22px 20px; color: var(--granite); }
 
@@ -368,7 +403,11 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
 .foot__nav ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .foot__nav a { color: var(--charcoal); text-decoration: none; font-weight: 600; }
 .foot__nav a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
-.foot__legal { color: var(--slate); font-size: .9rem; display: grid; gap: 12px; max-width: 70ch; }
+.foot__legal { color: var(--granite); font-size: .92rem; display: grid; gap: 12px; max-width: 70ch; }
+.foot__title { font-size: 1.15rem; }
+.foot__lead { color: var(--charcoal); font-weight: 600; }
+.foot__list { margin: 0; padding-left: 20px; display: grid; gap: 7px; }
+.foot__list li { list-style: disc; }
 .foot__copy { color: #7e818a; }
 
 /* ============================================================
