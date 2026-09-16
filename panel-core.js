@@ -289,13 +289,21 @@
       : '';
     var desc = id + '-hint' + (eridLine ? ' ' + id + '-erid' : '') + ' ' + id + '-err';
 
+    /* Раньше про обязательность поля знала только проверка при сохранении:
+       все поля выглядели одинаково, и клиент узнавал о пропуске задним
+       числом. Теперь это видно и слышно сразу. */
+    var req = f.required ? ' required aria-required="true"' : '';
+    var star = f.required
+      ? ' <span class="req" aria-hidden="true">*</span><span class="vh"> — обязательное поле</span>'
+      : '';
+
     var input = multi
-      ? '<textarea id="' + id + '" data-field="' + f.key + '" rows="4" aria-describedby="' +
+      ? '<textarea id="' + id + '" data-field="' + f.key + '" rows="4"' + req + ' aria-describedby="' +
         desc + '">' + esc(val) + '</textarea>'
       : '<input type="' + (f.type === 'url' ? 'url' : 'text') + '" id="' + id + '" data-field="' + f.key +
-        '" autocomplete="off" aria-describedby="' + desc + '" value="' + esc(val) + '">';
+        '" autocomplete="off"' + req + ' aria-describedby="' + desc + '" value="' + esc(val) + '">';
     return '<div class="field' + (wide ? ' wide' : '') + '">' +
-             '<label for="' + id + '">' + esc(f.label) + '</label>' + input +
+             '<label for="' + id + '">' + esc(f.label) + star + '</label>' + input +
              '<p class="hint" id="' + id + '-hint">' + esc(f.hint || '') + '</p>' + eridLine +
              '<p class="field__error" id="' + id + '-err"></p>' +
            '</div>';
@@ -360,10 +368,11 @@
           '<span class="logo-preview"><img src="' + esc(card.logo || '') + '" alt="" width="52" height="52" data-role="img-preview"></span>' +
           '<label class="abtn" for="' + fid(uid, 'file') + '">Выбрать файл…</label>' +
           '<input class="vh" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" id="' +
-            fid(uid, 'file') + '" data-field="file">' +
+            fid(uid, 'file') + '" data-field="file" aria-describedby="' + fid(uid, 'file') + '-hint">' +
           '<span class="hint" data-role="file-name">' +
             (embedded && card.logoName ? esc('Файл встроен в файл данных: ' + card.logoName) : '') +
           '</span>' +
+          '<span class="hint" id="' + fid(uid, 'file') + '-hint">PNG, JPG, WEBP или SVG, не больше 200 КБ.</span>' +
         '</div>' +
       '</div>' +
       '<div data-pane="mono"' + (mono ? '' : ' hidden') + '>' +

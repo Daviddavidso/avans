@@ -59,8 +59,13 @@
   function fail(msg) {
     pass.setAttribute('aria-invalid', 'true');
     err.textContent = 'Ошибка: ' + msg;
+    /* Если человек нажал Enter, фокус уже в поле: повторный focus() ничего
+       не объявляет, и отказ проходит молча. В этом случае — и только в
+       этом, чтобы не было двойного чтения, — говорим через живую область. */
+    var stay = document.activeElement === pass;
     pass.focus();
     pass.select();
+    if (stay) say('Ошибка: ' + msg, true);
   }
 
   function setBusy(on) {

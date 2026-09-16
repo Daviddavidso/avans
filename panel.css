@@ -465,3 +465,7 @@ body { overflow-wrap: break-word; }
 .gate__box .hint { margin-top: 8px; }
 .gate__box .field__error { margin-top: 8px; }
 .gate__submit { width: 100%; margin-top: 18px; }
+
+/* Звёздочка обязательного поля. Цвет не единственный признак: рядом
+   в подписи для читалки стоит «обязательное поле». */
+.req { color: var(--accent); font-weight: 700; }
