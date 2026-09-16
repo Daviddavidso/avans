@@ -214,7 +214,13 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
 .ticker__track { display: flex; align-items: center; gap: 14px; list-style: none; padding: 0; margin: 0; width: max-content; animation: slide 46s linear infinite; }
 .ticker__track.is-paused { animation-play-state: paused; }
 @keyframes slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .ticker__track { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  /* Без движения лента превращается в обычную сетку логотипов, иначе
+     за краем маски остаётся больше половины списка. */
+  .ticker__mask { overflow: visible; -webkit-mask-image: none; mask-image: none; }
+  .ticker__track { animation: none; width: 100%; flex-wrap: wrap; justify-content: center; }
+  .ticker__track > [aria-hidden="true"] { display: none; }
+}
 
 .ticker__item { flex: none; width: 128px; height: 62px; border-radius: 12px; background: #fff; display: grid; place-items: center; padding: 10px; }
 .ticker__item img { max-height: 100%; width: auto; object-fit: contain; }
@@ -270,7 +276,7 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
 /* ---------- карточки ---------- */
 .offers {
   margin: 18px 0 0; padding: 0; list-style: none;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 16px;
 }
 .card {
   height: 100%; display: flex; flex-direction: column; gap: 14px;
