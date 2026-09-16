@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>АВАНС — займы, карты и счёт для бизнеса в одном списке</title>
+<meta name="description" content="АВАНС — витрина финансовых продуктов: займы онлайн, дебетовые и кредитные карты, расчётный счёт для ИП и ООО. Сравните предложения банков и МФО и оформите заявку онлайн.">
+<meta name="theme-color" content="#0e1014">
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="АВАНС — займы, карты и счёт для бизнеса">
+<meta property="og:description" content="Займы онлайн, дебетовые и кредитные карты, расчётный счёт для бизнеса — в одном списке.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="fonts/manrope.css?v=20260916120726">
+<link rel="stylesheet" href="css/style.css?v=20260916120726">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Перейти к каталогу</a>
+
+<header class="head">
+  <div class="head__bar">
+    <a class="brand" href="#main">
+      <span class="brand__dot" aria-hidden="true"></span>
+      <span class="brand__word" data-brand>АВАНС</span>
+    </a>
+
+    <nav class="head__nav" aria-label="Разделы сайта">
+      <ul class="pills" role="list">
+        <li><a class="pill" href="#catalog">Каталог</a></li>
+        <li><a class="pill" href="#how">Как это работает</a></li>
+        <li><a class="pill" href="#faq">Вопросы</a></li>
+      </ul>
+    </nav>
+
+    <a class="btn btn--light head__cta" href="#catalog">Смотреть продукты</a>
+
+    <button class="burger" type="button" id="burger" aria-expanded="false" aria-controls="mobile-menu">
+      <span class="burger__lines" aria-hidden="true"></span>
+      <span class="vh">Меню</span>
+    </button>
+  </div>
+
+  <div class="menu" id="mobile-menu" hidden>
+    <div class="menu__panel" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+      <p class="vh" id="menu-title">Меню сайта</p>
+      <button class="menu__close" type="button" id="menu-close">
+        <span aria-hidden="true">✕</span><span class="vh">Закрыть меню</span>
+      </button>
+      <ul class="menu__list" role="list">
+        <li><a href="#catalog">Каталог</a></li>
+        <li><a href="#how">Как это работает</a></li>
+        <li><a href="#faq">Вопросы</a></li>
+      </ul>
+      <a class="btn btn--blue btn--block" href="#catalog">Смотреть продукты</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ─────────── первый экран ─────────── -->
+  <section class="hero">
+    <div class="wrap hero__in">
+      <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span><span data-tagline>19 предложений банков и МФО в одном списке</span></p>
+
+      <h1 class="hero__title">Деньги, карты и счёт <span class="hero__accent">в одном месте</span></h1>
+
+      <p class="hero__lead" data-lead>Займы, дебетовые и кредитные карты, счёт для бизнеса. Выбираете подходящее — и оформляете онлайн на сайте банка или МФО. Подбор бесплатный.</p>
+
+      <div class="hero__cta">
+        <a class="btn btn--blue btn--lg" href="#catalog">Смотреть продукты</a>
+        <a class="btn btn--ghost btn--lg" href="#how">Как это работает</a>
+      </div>
+
+      <ul class="stats" role="list" id="hero-stats"><!-- из data.js --></ul>
+    </div>
+  </section>
+
+  <!-- ─────────── лента логотипов ─────────── -->
+  <section class="ticker" aria-labelledby="ticker-title">
+    <div class="wrap ticker__head">
+      <h2 class="ticker__title" id="ticker-title">Партнёры каталога</h2>
+      <button class="ticker__pause" type="button" id="ticker-pause" aria-controls="ticker-track">Остановить движение</button>
+    </div>
+    <div class="ticker__mask">
+      <ul class="ticker__track" id="ticker-track" role="list"><!-- из data.js --></ul>
+    </div>
+  </section>
+
+  <!-- ─────────── каталог ─────────── -->
+  <section class="catalog" id="catalog" aria-labelledby="catalog-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="section-title" id="catalog-title">Каталог</h2>
+        <p class="section-lead">Выберите раздел или найдите компанию по названию. Кнопка открывает сайт банка или МФО — заявку вы заполняете там, на сайте компании.</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="search">
+          <label class="search__label" for="q">Поиск по каталогу</label>
+          <div class="search__box">
+            <svg class="search__icon" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M9 2a7 7 0 1 1-4.9 12L2 16.1 3.9 18 6 15.9A7 7 0 0 1 9 2Zm0 2a5 5 0 1 0 0 10A5 5 0 0 0 9 4Z" fill="currentColor"/></svg>
+            <input class="search__input" id="q" type="search" placeholder="Например: Займер, карта, счёт" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+
+        <fieldset class="filters">
+          <legend class="vh">Раздел каталога</legend>
+          <div class="filters__row" id="filters"><!-- из data.js --></div>
+        </fieldset>
+      </div>
+
+      <p class="results" id="results" role="status" aria-live="polite"></p>
+
+      <ul class="offers" id="offers" role="list"><!-- из data.js --></ul>
+
+      <div class="empty" id="empty" hidden>
+        <p class="empty__text">По этому запросу ничего не нашлось.</p>
+        <button class="btn btn--ghost" type="button" id="reset">Показать все продукты</button>
+      </div>
+
+      <p class="catalog__note">Точные ставки, лимиты и условия смотрите на сайте банка или МФО — там они всегда актуальные.</p>
+    </div>
+  </section>
+
+  <!-- ─────────── как это работает ─────────── -->
+  <section class="how" id="how" aria-labelledby="how-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="section-title" id="how-title">Как это работает</h2>
+        <p class="section-lead">Четыре шага от списка до денег на карте или открытого счёта.</p>
+      </div>
+
+      <ol class="steps" role="list">
+        <li class="step">
+          <span class="step__num" aria-hidden="true">01</span>
+          <h3 class="step__title">Выбираете раздел</h3>
+          <p class="step__text">Займы, дебетовые или кредитные карты, счёт для бизнеса. В каждом разделе — только предложения, которые работают сегодня.</p>
+        </li>
+        <li class="step">
+          <span class="step__num" aria-hidden="true">02</span>
+          <h3 class="step__title">Сравниваете условия</h3>
+          <p class="step__text">На карточке видно компанию, тип продукта и главное по условиям. Ничего не нужно искать по сайтам вручную.</p>
+        </li>
+        <li class="step">
+          <span class="step__num" aria-hidden="true">03</span>
+          <h3 class="step__title">Переходите к компании</h3>
+          <p class="step__text">Кнопка открывает сайт банка или МФО в новой вкладке. Анкету вы заполняете там — мы не собираем ваши документы и паспортные данные.</p>
+        </li>
+        <li class="step">
+          <span class="step__num" aria-hidden="true">04</span>
+          <h3 class="step__title">Получаете решение</h3>
+          <p class="step__text">Ответ приходит от самой компании. Деньги — на карту или счёт, карта — курьером либо в отделении.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ─────────── вопросы ─────────── -->
+  <section class="faq" id="faq" aria-labelledby="faq-title">
+    <div class="wrap wrap--narrow">
+      <div class="section-head">
+        <h2 class="section-title" id="faq-title">Частые вопросы</h2>
+        <p class="section-lead">Коротко о том, как устроен сайт и что происходит после нажатия кнопки.</p>
+      </div>
+
+      <div class="qa">
+        <details class="qa__item">
+          <summary class="qa__q">Сколько стоит подбор?</summary>
+          <div class="qa__a"><p>Нисколько. Сайт бесплатный для посетителя: мы получаем вознаграждение от банков и МФО за переход, а условия для вас от этого не меняются.</p></div>
+        </details>
+        <details class="qa__item">
+          <summary class="qa__q">Вы выдаёте деньги сами?</summary>
+          <div class="qa__a"><p>Нет. АВАНС — витрина предложений. Договор вы заключаете напрямую с банком или микрофинансовой организацией, она же принимает решение и переводит деньги.</p></div>
+        </details>
+        <details class="qa__item">
+          <summary class="qa__q">Нужно ли оставлять паспортные данные здесь?</summary>
+          <div class="qa__a"><p>Нет. На этом сайте нет анкет: все поля заполняются уже на сайте компании, по её защищённой форме.</p></div>
+        </details>
+        <details class="qa__item">
+          <summary class="qa__q">Что будет с моей заявкой, если откажут?</summary>
+          <div class="qa__a"><p>Решение принимает компания, и отказ не мешает подать заявку в другую из списка. Ограничений по числу заявок на сайте нет, но помните: каждое обращение банк или МФО может отразить в кредитной истории.</p></div>
+        </details>
+        <details class="qa__item">
+          <summary class="qa__q">Насколько свежие условия в каталоге?</summary>
+          <div class="qa__a"><p>Каталог обновляется вручную, дата последней проверки стоит в подвале. Ставки и лимиты компании меняют чаще, поэтому итоговые цифры всегда смотрите на их сайте.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── финальный блок ─────────── -->
+  <section class="final" aria-labelledby="final-title">
+    <div class="wrap wrap--narrow final__in">
+      <h2 class="final__title" id="final-title">Начните с каталога</h2>
+      <p class="final__text">Девятнадцать предложений в четырёх разделах. Выбор занимает пару минут.</p>
+      <div class="final__cta">
+        <a class="btn btn--blue btn--lg" href="#catalog">Открыть каталог</a>
+        <a class="btn btn--ghost btn--lg" href="#" id="tg-link" hidden>Написать в Telegram</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p class="foot__word" aria-hidden="true" data-brand>АВАНС</p>
+
+    <div class="foot__cols">
+      <nav class="foot__nav" aria-label="Подвал">
+        <ul role="list">
+          <li><a href="#catalog">Каталог</a></li>
+          <li><a href="#how">Как это работает</a></li>
+          <li><a href="#faq">Вопросы</a></li>
+        </ul>
+      </nav>
+
+      <div class="foot__legal">
+        <p>Условия проверены <span data-updated>16.09.2026</span>.</p>
+        <p><span data-brand-inline>АВАНС</span> — информационный сайт. Мы не выдаём займы и кредиты, не открываем счета и не являемся банком, микрофинансовой организацией или их представителем. Все решения принимает компания, на сайт которой ведёт кнопка.</p>
+        <p>Займы предоставляют микрофинансовые организации из государственного реестра Банка России, банковские продукты — банки с лицензией Банка России. Перед оформлением прочитайте договор и тарифы на сайте компании.</p>
+        <p class="foot__copy">© <span data-year>2026</span> <span data-brand-inline>АВАНС</span></p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="data.js?v=20260916120726"></script>
+<script src="js/app.js?v=20260916120726"></script>
+</body>
+</html>

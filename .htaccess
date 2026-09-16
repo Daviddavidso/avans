@@ -1,0 +1,65 @@
+# ──────────────────────────────────────────────────────────────────────────
+# АВАНС — настройки Apache для шаред-хостинга (reg.ru и подобные).
+# ──────────────────────────────────────────────────────────────────────────
+
+# Когда на домен выпустят SSL-сертификат, раскомментируйте три строки ниже —
+# сайт начнёт работать только по https. Раньше времени включать нельзя:
+# без сертификата браузер покажет предупреждение вместо сайта.
+# RewriteEngine On
+# RewriteCond %{SERVER_PORT} !^443$
+# RewriteRule .* https://%{SERVER_NAME}%{REQUEST_URI} [R,L]
+
+# Служебные файлы наружу не отдаём: в .admin-pass лежит хэш пароля панели,
+# в data.backup.js — прошлая версия каталога, в .login-attempts — журнал
+# попыток входа.
+<FilesMatch "^(\.admin-pass|\.login-attempts|\.save-info\.json|published\.json|data\.js\.prev|data\.backup\.js|\.pass-note)$">
+  Require all denied
+</FilesMatch>
+
+# На старых Apache директива выше не работает — дублируем по-старому.
+<IfModule !mod_authz_core.c>
+  <FilesMatch "^(\.admin-pass|\.login-attempts|\.save-info\.json|published\.json|data\.js\.prev|data\.backup\.js|\.pass-note)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Панель управления в поиске не нужна.
+  <FilesMatch "panel\.html$">
+    Header set X-Robots-Tag "noindex, nofollow"
+  </FilesMatch>
+
+  # Браузер не угадывает тип файла: подсунутый под видом картинки скрипт
+  # не выполнится.
+  Header always set X-Content-Type-Options "nosniff"
+  # Чужой сайт не спрячет страницу в невидимый iframe ради кликов вслепую.
+  Header always set X-Frame-Options "SAMEORIGIN"
+  # Чужому сайту уходит только домен, а не полный адрес страницы.
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # Сайту не нужны камера, микрофон и геопозиция — отключаем заранее.
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+
+  # Каталог и панель всегда свежие: иначе клиент сохранит правку,
+  # а на экране останется вчерашний файл из кеша.
+  <FilesMatch "^(data\.js|panel\.html|index\.html)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# Картинки, шрифты и стили можно держать в кеше: при сохранении из панели
+# к их адресам дописывается новая метка ?v=, и браузер скачивает заново.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType font/woff2 "access plus 180 days"
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+</IfModule>
+
+# Сжатие: страница и каталог едут к посетителю в несколько раз меньше.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml
+</IfModule>
