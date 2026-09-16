@@ -1,5 +1,5 @@
 /* ============================================================
-   АВАНС — витрина финансовых продуктов.
+   MFE — витрина финансовых продуктов.
    Тёмный «alt tab»: холст #0e1014, приподнятые карточки,
    волосяные рамки, один синий акцент, шрифт Manrope/Satoshi.
    ============================================================ */
@@ -394,6 +394,63 @@ h1, h2, h3 { color: var(--ink); line-height: 1.08; letter-spacing: -.02em; font-
 .step__num { display: block; font-size: 2.1rem; font-weight: 800; color: transparent; -webkit-text-stroke: 1.5px #6b7080; letter-spacing: -.03em; line-height: 1; }
 .step__title { margin-top: 16px; font-size: 1.14rem; }
 .step__text { margin-top: 10px; color: var(--granite); font-size: .96rem; }
+
+
+/* ============================================================
+   помощь с выбором: текст + форма
+   ============================================================ */
+.help { padding: clamp(56px, 8vw, 96px) 0; border-top: 1px solid var(--mist); }
+.help__in { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 4vw, 56px); align-items: start; }
+.help__pts { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; color: var(--granite); }
+.help__pts li { position: relative; padding-left: 28px; }
+.help__pts li::before {
+  content: ""; position: absolute; left: 0; top: .42em; width: 12px; height: 7px;
+  border-left: 2px solid var(--blue); border-bottom: 2px solid var(--blue); transform: rotate(-45deg);
+}
+.help__or { margin-top: 26px; color: var(--slate); font-size: .95rem; }
+.help__tg { margin-top: 10px; }
+
+.help__box {
+  background: var(--page); border: 1px solid var(--border-soft); border-radius: var(--r-feature);
+  padding: clamp(20px, 3vw, 30px); box-shadow: var(--shadow-1);
+}
+.form { display: grid; gap: 16px; }
+.form__note { color: var(--slate); font-size: .88rem; }
+
+.fld { display: grid; gap: 7px; }
+.fld label { font-size: .92rem; font-weight: 600; color: var(--charcoal); }
+.fld input[type="text"], .fld input[type="tel"], .fld select {
+  width: 100%; padding: 13px 14px; font-size: 1rem; color: var(--ink);
+  background: var(--bg); border: 1px solid var(--border-ctrl); border-radius: var(--r-input);
+}
+.fld select { appearance: none; padding-right: 40px;
+  background-image: linear-gradient(45deg, transparent 50%, #b6b8c0 50%), linear-gradient(135deg, #b6b8c0 50%, transparent 50%);
+  background-position: calc(100% - 20px) 55%, calc(100% - 14px) 55%;
+  background-size: 6px 6px, 6px 6px; background-repeat: no-repeat;
+}
+.fld input:hover, .fld select:hover { border-color: var(--border-ctrl-hover); }
+.fld input[aria-invalid="true"], .fld select[aria-invalid="true"] { border-color: var(--err); }
+.fld__h { color: var(--slate); font-size: .84rem; }
+.fld__e:empty { display: none; }
+.fld__e { color: var(--err); font-size: .86rem; }
+
+.fld--chk { grid-template-columns: auto 1fr; align-items: start; column-gap: 12px; }
+.fld--chk input { width: 22px; height: 22px; margin-top: 2px; accent-color: var(--blue-fill); }
+.fld--chk label { font-weight: 400; color: var(--granite); font-size: .92rem; line-height: 1.45; }
+.fld--chk .fld__e { grid-column: 1 / -1; }
+.fld--chk a { color: var(--blue-text); text-underline-offset: 3px; }
+
+/* Ловушка для ботов: не видна и не берётся клавиатурой. */
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.form__st { color: var(--granite); font-size: .92rem; min-height: 1.4em; }
+.form__err { color: var(--err); font-size: .92rem; background: var(--err-bg); border-radius: 10px; padding: 12px 14px; }
+.btn.is-busy { cursor: progress; }
+/* Гасим кнопку цветом, а не прозрачностью: opacity роняет контраст ниже нормы. */
+.btn[aria-disabled="true"] { background: #3b4763; border-color: #3b4763; color: #e8e9ee; }
+.btn[aria-disabled="true"]:hover { transform: none; background: #3b4763; }
+
+@media (max-width: 860px) { .help__in { grid-template-columns: 1fr; } }
 
 /* ============================================================
    вопросы

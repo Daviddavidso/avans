@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Заливка сайта «АВАНС» на хостинг по FTP.
+# Заливка сайта «MFE» на хостинг по FTP.
 #
 #   bash deploy.sh              — сайт без каталога (data.js не трогаем:
 #                                 его правит клиент через панель)
@@ -20,11 +20,11 @@ BASE="ftp://${FTP_HOST}/${FTP_DIR#/}/"
 AUTH="$FTP_USER:$FTP_PASS"
 
 FILES=(
-  index.html panel.html favicon.svg .htaccess robots.txt
+  index.html privacy.html panel.html favicon.svg .htaccess robots.txt
   css/style.css js/app.js
   fonts/manrope.css
   data.php check.php api.php
-  panel.css panel-core.js panel-schema.js panel-pass.js publish.js gate.js
+  panel.css panel-core.js panel-schema.js panel-leads.js publish.js gate.js
 )
 for f in fonts/*.woff2; do FILES+=("$f"); done
 for f in img/logos/*; do FILES+=("$f"); done
@@ -55,7 +55,7 @@ echo "── залито: $ok, ошибок: $fail"
 
 # Панель переписывает data.js и html (метка ?v=) — этим файлам нужны права
 # на запись, иначе «Сохранить на сайт» упрётся в отказ файловой системы.
-for f in data.js index.html panel.html; do
+for f in data.js index.html privacy.html panel.html; do
   curl -sS --max-time 30 --user "$AUTH" -Q "SITE CHMOD 664 ${FTP_DIR}/$f" "${BASE}" >/dev/null \
     && echo "  ok права на запись: $f" || echo "  ⚠ не выставились права на $f — поставьте 664 в файловом менеджере"
 done

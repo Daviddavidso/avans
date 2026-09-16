@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Вход — Панель управления — АВАНС</title>
+<title>Вход — Панель управления — MFE</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#111112">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="panel.css?v=20260916121430">
+<link rel="stylesheet" href="panel.css?v=20260916173258">
 </head>
 <body>
 
@@ -21,7 +21,7 @@
      Гейт и редактор — два main: наружу всегда выставлен ровно один. -->
 <main class="gate" id="gate" aria-labelledby="gate-title">
   <form class="gate__box" id="gate-form" novalidate>
-    <h1 id="gate-title">Вход в панель АВАНС</h1>
+    <h1 id="gate-title">Вход в панель MFE</h1>
     <p class="gate__intro" id="gate-intro">Здесь правится каталог: названия, условия, ссылки и порядок
        карточек. Пароль спрашивается при каждом входе.</p>
     <!-- Менеджеру паролей нужно поле логина рядом с паролем, иначе он не
@@ -46,7 +46,7 @@
 
 <header class="admin-header" hidden>
   <div class="wrap admin-header__inner">
-    <a href="index.html">АВАНС<span>Открыть сайт</span></a>
+    <a href="index.html">MFE<span>Открыть сайт</span></a>
   </div>
 </header>
 
@@ -62,6 +62,7 @@
 
     <nav class="panel-nav" aria-label="Разделы панели">
       <a href="#catalog">Каталог</a>
+      <a href="#leads">Заявки</a>
       <a href="#pass">Пароль</a>
     </nav>
 
@@ -127,6 +128,125 @@
     </section>
 
     <!-- ═══════════════ ПАРОЛЬ ═══════════════ -->
+    <!-- ═══════════════ ЗАЯВКИ ═══════════════ -->
+    <section class="panel-sec" id="leads" aria-labelledby="leads-h" tabindex="-1">
+      <div class="sec-bar">
+        <h2 id="leads-h">Заявки</h2>
+        <div class="sec-bar__acts" id="leads-acts">
+          <button class="abtn" type="button" id="leads-refresh">Обновить<span class="vh"> список заявок</span></button>
+          <button class="abtn" type="button" id="leads-csv">Скачать заявки в CSV</button>
+        </div>
+      </div>
+      <p class="sec-sub">Люди, которые оставили форму на сайте. Свежие сверху, время серверное.</p>
+      <p class="hint note" id="leads-note" hidden></p>
+
+      <div id="leads-body">
+
+        <!-- Телеграм -->
+        <div class="tg-box">
+          <h3 id="tg-h" tabindex="-1">Уведомления в Telegram</h3>
+          <p class="sec-sub">Пока бот не подключён, заявки видно только на этой странице — имена и телефоны никуда не уходят.</p>
+
+          <!-- Чужие попытки войти в бота. Не role="alert": блок появляется сам,
+               без действия человека, и перебивал бы его посреди вставки токена.
+               Заметность даёт вид и место наверху, а не перехват. -->
+          <div class="tg-warn" id="tg-warn" role="group" aria-labelledby="tg-warn-h" hidden>
+            <h4 id="tg-warn-h">Кто-то пытался подключиться к боту</h4>
+            <p>Этим людям бот отказал — заявки им не приходят. Если это не вы и не ваш человек, делать ничего не нужно.</p>
+            <ul id="tg-warn-list" role="list"></ul>
+            <button type="button" class="abtn" id="tg-warn-hide">Скрыть предупреждение</button>
+          </div>
+
+          <ol class="tg-steps">
+            <li>Откройте в Telegram <code>@BotFather</code> и отправьте ему команду <code>/newbot</code>.</li>
+            <li>Придумайте боту имя — он ответит строкой вида <code>1234567890:AAH…</code>. Это и есть токен.</li>
+            <li>Вставьте токен сюда и нажмите «Подключить».</li>
+            <li>Нажмите <b>«Получить ссылку для подключения»</b> и откройте её — с этого момента заявки приходят вам в личку.</li>
+          </ol>
+
+          <p class="tg-note">Просто нажать «Старт» в боте недостаточно, и это сделано нарочно: ник бота видно в поиске Telegram, и без ссылки-приглашения чужой человек получал бы заявки с именами и телефонами ваших клиентов.</p>
+
+          <form id="tg-form" class="fields" novalidate>
+            <div class="field wide">
+              <label for="tg-token">Токен бота</label>
+              <!-- Именно type="text": токен вставляют из буфера, и главная беда —
+                   кривая вставка, которую надо увидеть глазами. -->
+              <input id="tg-token" type="text" name="bot-token" required
+                     autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"
+                     data-lpignore="true" data-1p-ignore data-form-type="other"
+                     placeholder="1234567890:AAH…" aria-describedby="tg-token-err tg-token-hint">
+              <p class="field__error" id="tg-token-err"></p>
+              <p class="hint" id="tg-token-hint">Токен виден только серверу. Потеряли — попросите у BotFather новый командой /token.</p>
+            </div>
+            <div class="field wide row-inline">
+              <button type="submit" class="abtn abtn--main" id="tg-connect">Подключить</button>
+              <button type="button" class="abtn abtn--danger" id="tg-off" hidden>Отключить бота</button>
+            </div>
+          </form>
+
+          <!-- Приглашение получателя. Появляется, только когда бот подключён. -->
+          <div id="tg-pair-wrap" hidden>
+            <p class="row-inline">
+              <button type="button" class="abtn" id="tg-pair-get">Получить ссылку для подключения</button>
+            </p>
+
+            <!-- Блок стоит сразу за кнопкой, поэтому фокус после показа не
+                 двигаем: человек дойдёт до него следующим же Tab'ом. -->
+            <div class="pair" id="tg-pair" role="group" aria-labelledby="tg-pair-h" hidden>
+              <h4 id="tg-pair-h">Ссылка для подключения</h4>
+              <p id="tg-pair-warn">Код одноразовый и живёт 30 минут. Кто по нему пройдёт — будет получать заявки с именами и телефонами. Не пересылайте его и не вставляйте в чаты.</p>
+
+              <p class="pair-go">
+                <a class="abtn abtn--main" id="tg-pair-link" href="#" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" aria-describedby="tg-pair-warn">Открыть Telegram и подключиться<span class="vh" id="tg-pair-link-vh"> — откроется в новой вкладке</span></a>
+              </p>
+
+              <div class="field wide">
+                <label for="tg-pair-code">Код подключения</label>
+                <!-- lang="en": в русском документе синтезатор читает латиницу
+                     русскими приближениями, а набирать надо латиницу. -->
+                <input id="tg-pair-code" class="pair-code" type="text" readonly lang="en"
+                       spellcheck="false" autocomplete="off" aria-describedby="tg-pair-code-hint">
+                <p class="hint" id="tg-pair-code-hint">Пригодится, если Telegram открыт на другом устройстве. Чтобы прочитать по одному знаку, встаньте в поле и нажимайте стрелки.</p>
+              </div>
+
+              <div class="row-inline">
+                <button type="button" class="abtn" id="tg-pair-copy">Скопировать код подключения</button>
+                <button type="button" class="abtn" id="tg-pair-check">Проверить<span class="vh"> подключение</span></button>
+              </div>
+            </div>
+          </div>
+
+          <div id="tg-state" class="tg-state"></div>
+          <!-- Строки состояния разделов не живые: озвучивает их общий диктор
+               панели, по одному сообщению на действие. -->
+          <p class="status" id="tg-status"></p>
+        </div>
+
+        <a class="skip-inline" href="#pass">Пропустить таблицу заявок</a>
+
+        <!-- Таблица заявок. Обёртка становится таб-стопом, только когда её
+             и правда надо прокручивать — это решает panel-leads.js. -->
+        <div class="table-wrap" id="leads-wrap" role="region"
+             aria-label="Таблица заявок" aria-busy="false" hidden>
+          <table class="tbl">
+            <caption id="leads-cap">Заявок пока нет</caption>
+            <thead>
+              <tr>
+                <th scope="col">Имя</th>
+                <th scope="col">Дата</th>
+                <th scope="col">Телефон</th>
+                <th scope="col">Продукт</th>
+              </tr>
+            </thead>
+            <tbody id="leads-rows"></tbody>
+          </table>
+        </div>
+
+        <p class="empty" id="leads-empty" tabindex="-1">Заявок пока нет. Как только кто-то отправит форму на сайте, она появится здесь.</p>
+        <p class="status" id="leads-status"></p>
+      </div>
+    </section>
+
     <section class="panel-sec" id="pass" aria-labelledby="pass-h" tabindex="-1">
       <h2 id="pass-h">Пароль от панели</h2>
       <p class="sec-sub">Меняется сразу. На других устройствах после этого придётся войти заново — так и задумано:
@@ -204,12 +324,12 @@
 
 <!-- Порядок важен: сначала вход, потом данные сайта, схема проекта, ядро,
      модуль публикации (берёт из ядра готовый файл) и смена пароля. -->
-<script src="gate.js?v=20260916121430"></script>
+<script src="gate.js?v=20260916173258"></script>
 <script src="data.php"></script>
-<script>if(typeof OFFERS==="undefined"){document.write('<script src="data.js?v=20260916121430"><\/script>');}</script>
-<script src="panel-schema.js?v=20260916121430"></script>
-<script src="panel-core.js?v=20260916121430"></script>
-<script src="publish.js?v=20260916121430"></script>
-<script src="panel-pass.js?v=20260916121430"></script>
+<script>if(typeof OFFERS==="undefined"){document.write('<script src="data.js?v=20260916173258"><\/script>');}</script>
+<script src="panel-schema.js?v=20260916173258"></script>
+<script src="panel-core.js?v=20260916173258"></script>
+<script src="publish.js?v=20260916173258"></script>
+<script src="panel-leads.js?v=20260916173258"></script>
 </body>
 </html>

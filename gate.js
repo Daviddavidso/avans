@@ -76,7 +76,7 @@
   }
 
   function unlock(note) {
-    document.title = 'Панель управления — АВАНС';
+    document.title = 'Панель управления — MFE';
     /* Прячем, а не удаляем: когда сессия истечёт, экран входа понадобится
        снова — без перезагрузки и без потери того, что открыто в редакторе. */
     gate.hidden = true;
@@ -95,7 +95,7 @@
      входа возвращаем, причину пишем в ошибку поля — она в его описании,
      и фокус в поле прочитает её сам. */
   function lock(reason) {
-    document.title = 'Вход — Панель управления — АВАНС';
+    document.title = 'Вход — Панель управления — MFE';
     document.querySelectorAll('.skip-link, .admin-header, #main').forEach(function (n) {
       n.hidden = true;
     });

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   АВАНС — витрина финансовых продуктов.
+   MFE — витрина финансовых продуктов.
 
    Каталог объявлен глобальными const в data.js. На адресе index.html?draft=1
    вместо боевого файла подставляется черновик из панели (localStorage).
@@ -119,16 +119,19 @@
     if (site.updated) { var u = $('[data-updated]'); if (u) u.textContent = site.updated; }
     var y = $('[data-year]'); if (y) y.textContent = String(new Date().getFullYear());
 
-    var tg = $('#tg-link');
-    if (tg && site.telegram) {
-      var nick = String(site.telegram).replace(/^@+/, '').replace(/^https?:\/\/t\.me\//i, '');
-      if (/^[A-Za-z0-9_]{3,64}$/.test(nick)) {
+    /* Ник в телеграме заполняется в панели. Пока пусто — кнопки скрыты:
+       ссылка «в никуда» хуже, чем её отсутствие. */
+    var nick = String(site.telegram || '').replace(/^@+/, '').replace(/^https?:\/\/t\.me\//i, '');
+    if (/^[A-Za-z0-9_]{3,64}$/.test(nick)) {
+      $$('#tg-link, #tg-help').forEach(function (tg) {
         tg.href = 'https://t.me/' + nick;
         tg.target = '_blank';
         tg.rel = 'noopener';
         tg.appendChild(el('span', 'vh', ' (откроется в новой вкладке)'));
         tg.hidden = false;
-      }
+      });
+      var or = $('#tg-or');
+      if (or) or.hidden = false;
     }
   }
 
@@ -654,6 +657,171 @@
     toggleClear();
   }
 
+
+  /* ==========================================================================
+     Форма «Помощь с выбором». Уходит в api.php (действие lead): пишется в
+     файл над корнем сайта и, если подключён бот, в Telegram. Разделы в
+     списке — те же, что в каталоге, поэтому берём их из data.js.
+     ========================================================================== */
+  function sayAlert(text) {
+    var box = $('#live-alert');
+    if (!box) return;
+    box.textContent = '';
+    setTimeout(function () { box.textContent = text; }, 60);
+  }
+
+  function bindLeadForm() {
+    var form = $('#lead');
+    if (!form) return;
+
+    var select = $('#f-product');
+    var unknown = select && select.querySelector('option[value="unknown"]');
+    if (select && unknown) {
+      cats.forEach(function (c) {
+        var o = document.createElement('option');
+        o.value = c.id;
+        o.textContent = c.label;
+        select.insertBefore(o, unknown);
+      });
+    }
+
+    var status = $('#f-status');
+    var errBox = $('#f-error');
+    var submit = $('#f-submit');
+    var names = ['name', 'phone', 'product', 'consent'];
+    var fields = names.map(function (n) { return form.elements[n]; }).filter(Boolean);
+
+    /* Ненадёжная связь — обычное дело. Введённое храним в сессии браузера,
+       чтобы после неудачной отправки не пришлось набирать заново. */
+    var KEEP = 'avans:lead';
+    try {
+      var saved = JSON.parse(sessionStorage.getItem(KEEP) || '{}');
+      ['name', 'phone', 'product'].forEach(function (k) {
+        if (saved[k] && form.elements[k]) form.elements[k].value = saved[k];
+      });
+    } catch (e) { /* приватный режим — просто не подставляем */ }
+
+    function keep() {
+      try {
+        sessionStorage.setItem(KEEP, JSON.stringify({
+          name: form.elements.name.value,
+          phone: form.elements.phone.value,
+          product: form.elements.product.value
+        }));
+      } catch (e) { /* не удалось — не страшно */ }
+    }
+
+    function normPhone(v) {
+      var d = String(v).replace(/\D/g, '').replace(/^8/, '7');
+      return (d.length === 11 && d.charAt(0) === '7') ? '+7' + d.slice(1) : null;
+    }
+
+    var RULES = {
+      name: function (el) { return el.value.trim().length >= 2 ? '' : 'Укажите имя — хотя бы две буквы.'; },
+      phone: function (el) {
+        if (!el.value.trim()) return 'Укажите телефон — по нему мы свяжемся.';
+        return normPhone(el.value) ? '' : 'Введите номер в виде +7 999 123-45-67.';
+      },
+      product: function (el) { return el.value ? '' : 'Выберите раздел из списка.'; },
+      consent: function (el) { return el.checked ? '' : 'Без согласия на обработку данных заявку принять нельзя.'; }
+    };
+
+    function errOf(el) { return document.getElementById(el.id + '-e'); }
+    function setErr(el, m) { var n = errOf(el); if (n) n.textContent = 'Ошибка: ' + m; el.setAttribute('aria-invalid', 'true'); }
+    function clrErr(el) { var n = errOf(el); if (n) n.textContent = ''; el.removeAttribute('aria-invalid'); }
+
+    fields.forEach(function (el) {
+      var ev = (el.type === 'checkbox' || el.tagName === 'SELECT') ? 'change' : 'input';
+      el.addEventListener(ev, function () {
+        keep();
+        /* Подсказку убираем сразу, как только поле исправили. */
+        if (el.getAttribute('aria-invalid') === 'true' && !RULES[el.name](el)) clrErr(el);
+      });
+      el.addEventListener('blur', function () {
+        if (form.dataset.tried !== 'true') return;
+        var m = RULES[el.name](el);
+        m ? setErr(el, m) : clrErr(el);
+      });
+    });
+
+    function busy(on) {
+      form.dataset.busy = on ? 'true' : 'false';
+      if (!submit) return;
+      /* Именно aria-disabled: настоящий disabled у кнопки под фокусом
+         роняет фокус в body, и человек не услышит, чем всё кончилось. */
+      submit.setAttribute('aria-disabled', on ? 'true' : 'false');
+      submit.classList.toggle('is-busy', !!on);
+    }
+
+    function send(body, attempt) {
+      return fetch('api.php?action=lead', { method: 'POST', body: body }).then(function (r) {
+        var type = (r.headers.get('content-type') || '');
+        if (type.indexOf('application/json') === -1) {
+          /* Антибот хостинга отдаёт свою страницу с кодом 200. Первый запрос
+             со свежей страницы он съедает чаще всего — пробуем ещё раз. */
+          if (!attempt) return new Promise(function (res) {
+            setTimeout(function () { res(send(body, 1)); }, 1500);
+          });
+          throw new Error('not json');
+        }
+        return r.json();
+      });
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (form.dataset.busy === 'true') return;
+      form.dataset.tried = 'true';
+      if (errBox) { errBox.hidden = true; errBox.textContent = ''; }
+
+      var bad = [];
+      fields.forEach(function (el) {
+        var m = RULES[el.name](el);
+        if (m) { setErr(el, m); bad.push(el); } else { clrErr(el); }
+      });
+      if (bad.length) {
+        if (status) status.textContent = '';
+        sayAlert('Заявка не отправлена. Не заполнено полей: ' + bad.length + '. Проверьте отмеченные.');
+        bad[0].focus({ preventScroll: true });
+        ensureVisible(bad[0]);
+        return;
+      }
+
+      if (form.elements.site && form.elements.site.value) return;   /* бот */
+
+      if (/\.github\.io$/i.test(location.hostname) || location.protocol === 'file:') {
+        if (status) status.textContent = 'Это превью — заявка никуда не ушла. На рабочем сайте она попадает в панель и в Telegram.';
+        say('Это превью: заявка не отправляется.', { delay: 0, force: true });
+        return;
+      }
+
+      busy(true);
+      if (status) status.textContent = 'Отправляем…';
+      var body = new FormData(form);
+      body.set('phone', normPhone(form.elements.phone.value));
+
+      send(body, 0).then(function (data) {
+        if (!data || !data.ok) throw new Error((data && data.error) || 'refused');
+        form.reset();
+        fields.forEach(clrErr);
+        form.dataset.tried = 'false';
+        try { sessionStorage.removeItem(KEEP); } catch (e) {}
+        if (status) status.textContent = 'Заявка отправлена — свяжемся по указанному телефону.';
+        say('Заявка отправлена. Свяжемся по указанному телефону.', { delay: 0, force: true });
+      }).catch(function () {
+        if (status) status.textContent = '';
+        var tg = site.telegram ? ' Либо напишите в Telegram — кнопка слева.' : '';
+        if (errBox) {
+          errBox.textContent = 'Ошибка: заявка не ушла. Проверьте связь и попробуйте ещё раз.' + tg;
+          errBox.hidden = false;
+        }
+        sayAlert('Заявка не отправлена. Проверьте связь и попробуйте ещё раз.' + tg);
+        /* Поля нарочно не чистим: набирать всё заново — худшее, что можно
+           предложить человеку после отказа. */
+      }).then(function () { busy(false); });
+    });
+  }
+
   /* ---------- мобильное меню ---------- */
   var menuApi = { close: function () {} };
 
@@ -790,6 +958,7 @@
     renderTicker();
     renderFilters();
     bindSearch();
+    bindLeadForm();
     syncFromForm();
     renderOffers({ initial: true });
     bindMenu();

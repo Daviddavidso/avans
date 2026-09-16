@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>АВАНС — займы, карты и счёт для бизнеса в одном списке</title>
-<meta name="description" content="АВАНС — витрина финансовых продуктов: займы онлайн, дебетовые и кредитные карты, расчётный счёт для ИП и ООО. Сравните предложения банков и МФО и оформите заявку онлайн.">
+<title>MFE — займы, карты и счёт для бизнеса в одном списке</title>
+<meta name="description" content="MFE — витрина финансовых продуктов: займы онлайн, дебетовые и кредитные карты, расчётный счёт для ИП и ООО. Сравните предложения банков и МФО и оформите заявку онлайн.">
 <meta name="theme-color" content="#0e1014">
 <meta name="robots" content="noindex, nofollow">
 <meta property="og:type" content="website">
-<meta property="og:title" content="АВАНС — займы, карты и счёт для бизнеса">
+<meta property="og:title" content="MFE — займы, карты и счёт для бизнеса">
 <meta property="og:description" content="Займы онлайн, дебетовые и кредитные карты, расчётный счёт для бизнеса — в одном списке.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="fonts/manrope.css?v=20260916135338">
-<link rel="stylesheet" href="css/style.css?v=20260916135338">
+<link rel="stylesheet" href="fonts/manrope.css?v=20260916173258">
+<link rel="stylesheet" href="css/style.css?v=20260916173258">
 </head>
 <body>
 
@@ -20,20 +20,22 @@
      скрипт. Если её заполнить в том же такте, что и создать, читалка
      промолчит; если держать внутри каталога — перерисовка её потеряет. -->
 <p class="vh" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
+<p class="vh" id="live-alert" role="alert" aria-atomic="true"></p>
 
 <a class="skip-link" href="#main">Перейти к содержимому</a>
 
 <header class="head">
   <div class="head__bar">
-    <a class="brand" href="index.html" aria-label="АВАНС — на главную">
+    <a class="brand" href="index.html" aria-label="MFE — на главную">
       <span class="brand__dot" aria-hidden="true"></span>
-      <span class="brand__word" data-brand>АВАНС</span>
+      <span class="brand__word" data-brand>MFE</span>
     </a>
 
     <nav class="head__nav" aria-label="Разделы сайта">
       <ul class="pills" role="list">
         <li><a class="pill" href="#catalog">Каталог</a></li>
         <li><a class="pill" href="#how">Как это работает</a></li>
+        <li><a class="pill" href="#help">Помощь</a></li>
         <li><a class="pill" href="#faq">Вопросы</a></li>
       </ul>
     </nav>
@@ -55,6 +57,7 @@
       <ul class="menu__list" role="list">
         <li><a href="#catalog">Каталог</a></li>
         <li><a href="#how">Как это работает</a></li>
+        <li><a href="#help">Помощь с выбором</a></li>
         <li><a href="#faq">Вопросы</a></li>
       </ul>
       <a class="btn btn--blue btn--block" href="#catalog">Смотреть продукты</a>
@@ -171,9 +174,77 @@
         <li class="step">
           <span class="step__num" aria-hidden="true">04</span>
           <h3 class="step__title">Дождитесь решения</h3>
-          <p class="step__text">Решение принимает банк или МФО, АВАНС на него не влияет. Деньги приходят на карту или счёт, карта — курьером либо в отделении.</p>
+          <p class="step__text">Решение принимает банк или МФО, MFE на него не влияет. Деньги приходят на карту или счёт, карта — курьером либо в отделении.</p>
         </li>
       </ol>
+    </div>
+  </section>
+
+
+  <!-- ─────────── помощь с выбором ─────────── -->
+  <section class="help" id="help">
+    <div class="wrap help__in">
+      <div class="help__copy">
+        <h2 class="section-title" tabindex="-1">Помощь с выбором</h2>
+        <p class="section-lead">Не понимаете, что подойдёт — займ, карта или счёт для бизнеса?
+          Оставьте телефон: подскажем, какие предложения из каталога закрывают вашу задачу.</p>
+        <ul class="help__pts" role="list">
+          <li>Подбор бесплатный и ни к чему не обязывает</li>
+          <li>Паспортные данные на сайте не спрашиваем</li>
+          <li>Отказаться можно на любом шаге</li>
+        </ul>
+        <p class="help__or" id="tg-or" hidden>Или напишите сразу в мессенджер:</p>
+        <a class="btn btn--ghost help__tg" id="tg-help" href="#" hidden>Написать в Telegram</a>
+      </div>
+
+      <div class="help__box">
+        <form class="form" id="lead" novalidate>
+          <p class="form__note" id="form-note">Все поля обязательные.</p>
+
+          <div class="fld">
+            <label for="f-name">Имя</label>
+            <input id="f-name" name="name" type="text" autocomplete="name" required aria-required="true"
+                   aria-describedby="f-name-e">
+            <p class="fld__e" id="f-name-e"></p>
+          </div>
+
+          <div class="fld">
+            <label for="f-phone">Телефон</label>
+            <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-required="true"
+                   aria-describedby="f-phone-h f-phone-e">
+            <p class="fld__h" id="f-phone-h">Например: +7 999 123-45-67. Можно через 8 — приведём к нужному виду.</p>
+            <p class="fld__e" id="f-phone-e"></p>
+          </div>
+
+          <div class="fld">
+            <label for="f-product">Что интересует</label>
+            <select id="f-product" name="product" required aria-required="true" aria-describedby="f-product-e">
+              <option value="" disabled selected>Выберите раздел</option>
+              <!-- разделы подставляет js/app.js из data.js -->
+              <option value="unknown">Пока не знаю, нужен совет</option>
+            </select>
+            <p class="fld__e" id="f-product-e"></p>
+          </div>
+
+          <div class="fld fld--chk">
+            <input id="f-consent" name="consent" type="checkbox" required aria-required="true" aria-describedby="f-consent-e">
+            <label for="f-consent">Согласен на обработку персональных данных по
+              <a href="privacy.html">политике обработки данных</a>.</label>
+            <p class="fld__e" id="f-consent-e"></p>
+          </div>
+
+          <!-- ловушка для ботов: людям не видна и не доступна с клавиатуры -->
+          <div class="hp" aria-hidden="true">
+            <label for="f-site">Сайт</label>
+            <input id="f-site" name="site" type="text" tabindex="-1" autocomplete="off">
+          </div>
+
+          <button class="btn btn--blue btn--lg btn--block" type="submit" id="f-submit">Получить подсказку</button>
+
+          <p class="form__st" id="f-status"></p>
+          <p class="form__err" id="f-error" hidden></p>
+        </form>
+      </div>
     </div>
   </section>
 
@@ -192,7 +263,7 @@
         </details>
         <details class="qa__item">
           <summary class="qa__q"><h3 class="qa__h">Вы выдаёте деньги сами?</h3><span class="qa__ico" aria-hidden="true"></span></summary>
-          <div class="qa__a"><p>Нет. АВАНС — витрина предложений. Договор вы заключаете напрямую с банком или микрофинансовой организацией, она же принимает решение и переводит деньги.</p></div>
+          <div class="qa__a"><p>Нет. MFE — витрина предложений. Договор вы заключаете напрямую с банком или микрофинансовой организацией, она же принимает решение и переводит деньги.</p></div>
         </details>
         <details class="qa__item">
           <summary class="qa__q"><h3 class="qa__h">Нужно ли оставлять паспортные данные здесь?</h3><span class="qa__ico" aria-hidden="true"></span></summary>
@@ -226,20 +297,21 @@
 
 <footer class="foot">
   <div class="wrap">
-    <p class="foot__word" aria-hidden="true" data-brand>АВАНС</p>
+    <p class="foot__word" aria-hidden="true" data-brand>MFE</p>
 
     <div class="foot__cols">
       <nav class="foot__nav" aria-label="Ссылки в подвале">
         <ul role="list">
           <li><a href="#catalog">Каталог</a></li>
           <li><a href="#how">Как это работает</a></li>
+          <li><a href="#help">Помощь с выбором</a></li>
           <li><a href="#faq">Вопросы</a></li>
         </ul>
       </nav>
 
       <div class="foot__legal">
         <h2 class="foot__title">Коротко о сайте</h2>
-        <p class="foot__lead"><span data-brand-inline>АВАНС</span> — витрина. Мы не выдаём деньги и не принимаем заявки.</p>
+        <p class="foot__lead"><span data-brand-inline>MFE</span> — витрина. Мы не выдаём деньги и не принимаем заявки.</p>
         <ul class="foot__list" role="list">
           <li>Мы не банк и не МФО. Денег мы не выдаём.</li>
           <li>Кнопки в карточках ведут на сайты банков и МФО. Это партнёрские ссылки.</li>
@@ -251,13 +323,13 @@
         </ul>
         <p>Займы предоставляют микрофинансовые организации, включённые в государственный реестр Банка России. Банковские услуги оказывают кредитные организации с лицензией Банка России.</p>
         <p>Условия проверены <span data-updated>16.09.2026</span>.</p>
-        <p class="foot__copy">© <span data-year>2026</span> <span data-brand-inline>АВАНС</span></p>
+        <p class="foot__copy">© <span data-year>2026</span> <span data-brand-inline>MFE</span></p>
       </div>
     </div>
   </div>
 </footer>
 
-<script src="data.js?v=20260916135338"></script>
-<script src="js/app.js?v=20260916135338"></script>
+<script src="data.js?v=20260916173258"></script>
+<script src="js/app.js?v=20260916173258"></script>
 </body>
 </html>
