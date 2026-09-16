@@ -151,6 +151,78 @@
     });
   }
 
+
+  /* ==========================================================================
+     Логотипы приходят разные: у одних прозрачный фон, у других белый, а
+     третьи — готовая цветная плашка (иконка приложения). Если всё подряд
+     класть на белый квадрат, плашки выглядят «картинкой в картинке».
+     Поэтому определяем вид логотипа прямо в браузере по углам картинки:
+     сплошная плашка ложится в плитку целиком, знак — по центру с полями.
+     Ничего не хардкодим: клиент меняет логотипы в панели, и разбор
+     подстроится сам.
+     ========================================================================== */
+  function classifyLogo(img, done) {
+    function decide() {
+      var kind = 'white', tone = '';
+      try {
+        var nw = img.naturalWidth, nh = img.naturalHeight;
+        if (!nw || !nh) { done(kind, tone); return; }
+        /* Мельчить нельзя: при сильном уменьшении тонкая белая рамка
+           замешивается в угловой пиксель, и цветная плашка определяется
+           как белый фон. Берём натуральный размер (с потолком) и щупаем
+           точки по рамке, отступив внутрь. */
+        var scale = Math.min(1, 128 / Math.max(nw, nh));
+        var w = Math.max(8, Math.round(nw * scale));
+        var h = Math.max(8, Math.round(nh * scale));
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        var ctx = c.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, w, h);
+
+        var inx = Math.max(1, Math.round(w * 0.06));
+        var iny = Math.max(1, Math.round(h * 0.06));
+        var xs = [inx, Math.round(w / 2), w - 1 - inx];
+        var ys = [iny, Math.round(h / 2), h - 1 - iny];
+        var pts = [];
+        xs.forEach(function (x) { pts.push([x, ys[0]], [x, ys[2]]); });
+        ys.forEach(function (y) { pts.push([xs[0], y], [xs[2], y]); });
+
+        var clear = 0, white = 0, colors = [];
+        pts.forEach(function (pt) {
+          var d = ctx.getImageData(pt[0], pt[1], 1, 1).data;
+          if (d[3] < 40) { clear++; return; }
+          if (d[0] > 238 && d[1] > 238 && d[2] > 238) { white++; return; }
+          colors.push([d[0], d[1], d[2]]);
+        });
+
+        var n = pts.length;
+        if (clear / n >= 0.6) kind = 'mark';
+        else if (white / n >= 0.6) kind = 'white';
+        else if (colors.length) {
+          /* Самый частый цвет рамки: если он занимает её почти всю —
+             это готовая цветная плашка, и плитку красим в него же. */
+          var best = null, bestN = 0;
+          colors.forEach(function (a) {
+            var k = colors.filter(function (b) {
+              return Math.abs(a[0] - b[0]) < 18 && Math.abs(a[1] - b[1]) < 18 && Math.abs(a[2] - b[2]) < 18;
+            }).length;
+            if (k > bestN) { bestN = k; best = a; }
+          });
+          if (best && bestN >= n * 0.6) {
+            kind = 'tile';
+            tone = 'rgb(' + best[0] + ',' + best[1] + ',' + best[2] + ')';
+          }
+        }
+      } catch (e) {
+        /* Картинка с чужого домена «пачкает» холст — оставляем белую плитку. */
+        kind = 'white';
+      }
+      done(kind, tone);
+    }
+    if (img.complete && img.naturalWidth) decide();
+    else img.addEventListener('load', decide, { once: true });
+  }
+
   /* ---------- лента логотипов (украшение, скрыта от читалки) ---------- */
   function renderTicker() {
     var track = $('#ticker-track');
@@ -171,8 +243,13 @@
         var img = new Image();
         img.src = src;
         img.alt = '';
-        img.loading = 'lazy';
+        /* Не lazy: лента двигается трансформом, а от него ленивые картинки
+           не подгружаются — плитки оставались пустыми. */
         img.decoding = 'async';
+        classifyLogo(img, function (kind, tone) {
+          li.setAttribute('data-logo', kind);
+          if (tone) li.style.background = tone;
+        });
         li.appendChild(img);
         track.appendChild(li);
       });
@@ -288,6 +365,10 @@
       img.alt = '';          /* название компании стоит рядом заголовком */
       img.loading = 'lazy';
       img.decoding = 'async';
+      classifyLogo(img, function (kind, tone) {
+        logo.setAttribute('data-logo', kind);
+        if (tone) logo.style.background = tone;
+      });
       logo.appendChild(img);
     } else {
       logo.appendChild(plaque(o));
