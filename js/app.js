@@ -119,11 +119,12 @@
     if (site.updated) { var u = $('[data-updated]'); if (u) u.textContent = site.updated; }
     var y = $('[data-year]'); if (y) y.textContent = String(new Date().getFullYear());
 
-    /* Ник в телеграме заполняется в панели. Пока пусто — кнопки скрыты:
-       ссылка «в никуда» хуже, чем её отсутствие. */
+    /* Ник в телеграме заполняется в панели. Пока пусто — все три кнопки
+       (первый экран, форма, финал) скрыты: ссылка «в никуда» хуже, чем её
+       отсутствие. */
     var nick = String(site.telegram || '').replace(/^@+/, '').replace(/^https?:\/\/t\.me\//i, '');
     if (/^[A-Za-z0-9_]{3,64}$/.test(nick)) {
-      $$('#tg-link, #tg-help').forEach(function (tg) {
+      $$('#tg-hero, #tg-link, #tg-help').forEach(function (tg) {
         tg.href = 'https://t.me/' + nick;
         tg.target = '_blank';
         tg.rel = 'noopener';

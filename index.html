@@ -12,7 +12,7 @@
 <meta property="og:description" content="Займы онлайн, дебетовые и кредитные карты, расчётный счёт для бизнеса — в одном списке.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="fonts/manrope.css?v=20260916174702">
-<link rel="stylesheet" href="css/style.css?v=20260916174702">
+<link rel="stylesheet" href="css/style.css?v=20260918165948">
 </head>
 <body>
 
@@ -78,7 +78,9 @@
 
       <div class="hero__cta">
         <a class="btn btn--blue btn--lg" href="#catalog">Смотреть продукты</a>
-        <a class="btn btn--ghost btn--lg" href="#how">Что будет после нажатия «Оформить»</a>
+        <!-- Ссылка в Telegram: адрес подставляет app.js из site.telegram,
+             пока ник в панели пуст — кнопка скрыта, как и две другие. -->
+        <a class="btn btn--ghost btn--lg" href="#" id="tg-hero" hidden>Написать в Telegram</a>
       </div>
 
       <ul class="stats" role="list" id="hero-stats"><!-- из data.js --></ul>
@@ -330,6 +332,6 @@
 </footer>
 
 <script src="data.js?v=20260916174702"></script>
-<script src="js/app.js?v=20260916174702"></script>
+<script src="js/app.js?v=20260918165948"></script>
 </body>
 </html>
